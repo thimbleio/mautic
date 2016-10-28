@@ -11,6 +11,8 @@
 
 namespace Mautic\LeadBundle\Model;
 
+use Mautic\CategoryBundle\Entity\Category;
+use Mautic\CategoryBundle\Model\CategoryModel;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\Chart\ChartQuery;
 use Mautic\CoreBundle\Helper\Chart\LineChart;
@@ -26,12 +28,14 @@ use Mautic\LeadBundle\Entity\Company;
 use Mautic\LeadBundle\Entity\DoNotContact;
 use Mautic\LeadBundle\Entity\FrequencyRule;
 use Mautic\LeadBundle\Entity\Lead;
+use Mautic\LeadBundle\Entity\LeadCategory;
 use Mautic\LeadBundle\Entity\LeadField;
 use Mautic\LeadBundle\Entity\LeadList;
 use Mautic\LeadBundle\Entity\PointsChangeLog;
 use Mautic\LeadBundle\Entity\StagesChangeLog;
 use Mautic\LeadBundle\Entity\Tag;
 use Mautic\LeadBundle\Entity\UtmTag;
+use Mautic\LeadBundle\Event\ChannelEvent;
 use Mautic\LeadBundle\Event\LeadChangeEvent;
 use Mautic\LeadBundle\Event\LeadEvent;
 use Mautic\LeadBundle\Event\LeadMergeEvent;
@@ -96,6 +100,11 @@ class LeadModel extends FormModel
     protected $companyModel;
 
     /**
+     * @var CategoryModel
+     */
+    protected $categoryModel;
+
+    /**
      * @var FormFactory
      */
     protected $formFactory;
@@ -121,7 +130,8 @@ class LeadModel extends FormModel
         FieldModel $leadFieldModel,
         ListModel $leadListModel,
         FormFactory $formFactory,
-        CompanyModel $companyModel
+        CompanyModel $companyModel,
+        CategoryModel $categoryModel
     ) {
         $this->request           = $requestStack->getCurrentRequest();
         $this->cookieHelper      = $cookieHelper;
@@ -132,6 +142,7 @@ class LeadModel extends FormModel
         $this->leadListModel     = $leadListModel;
         $this->companyModel      = $companyModel;
         $this->formFactory       = $formFactory;
+        $this->categoryModel     = $categoryModel;
     }
 
     /**
@@ -220,6 +231,16 @@ class LeadModel extends FormModel
     public function getStagesChangeLogRepository()
     {
         return $this->em->getRepository('MauticLeadBundle:StagesChangeLog');
+    }
+
+    /**
+     * Get the lead categories repository.
+     *
+     * @return \Mautic\LeadBundle\Entity\LeadCategoryRepository
+     */
+    public function getLeadCategoryRepository()
+    {
+        return $this->em->getRepository('MauticLeadBundle:LeadCategory');
     }
 
     /**
@@ -1017,11 +1038,11 @@ class LeadModel extends FormModel
         $this->leadListModel->removeLead($lead, $lists, $manuallyRemoved);
     }
     /**
-     * Add lead to lists.
+     * Add lead to Stage.
      *
-     * @param array|Lead     $lead
-     * @param array|LeadList $stage
-     * @param bool           $manuallyAdded
+     * @param array|Lead  $lead
+     * @param array|Stage $stage
+     * @param bool        $manuallyAdded
      */
     public function addToStages($lead, $stage, $manuallyAdded = true)
     {
@@ -1315,31 +1336,70 @@ class LeadModel extends FormModel
     /**
      * Set frequency rules for lead per channel.
      *
-     * @param Lead         $lead
-     * @param string|array $channel If an array with an ID, use the structure ['email' => 123]
-     * @param bool         $persist
+     * @param Lead $lead
+     * @param null $data
+     * @param null $leadLists
      *
      * @return bool Returns true
      */
-    public function setFrequencyRules(Lead $lead, $channel, $frequencyTime = null, $frequencyNumber = null)
+    public function setFrequencyRules(Lead $lead, $data = null, $leadLists = null)
     {
         // One query to get all the lead's current frequency rules and go ahead and create entities for them
         $frequencyRules = $lead->getFrequencyRules()->toArray();
         $entities       = [];
-        foreach ($channel as $ch) {
-            $frequencyRule = (isset($frequencyRules[$ch])) ? $frequencyRules[$ch] : new FrequencyRule();
-            $frequencyRule->setChannel($ch);
-            $frequencyRule->setLead($lead);
-            $frequencyRule->setDateAdded(new \DateTime());
-            $frequencyRule->setFrequencyNumber($frequencyNumber);
-            $frequencyRule->setFrequencyTime($frequencyTime);
-            $frequencyRule->setLead($lead);
+        $channels       = $this->getContactChannels($lead);
 
-            $entities[$ch] = $frequencyRule;
+        foreach ($channels as $ch) {
+            if (!empty($data['preferred_channel']) or (!empty($data['frequency_number_'.$ch]) and !empty($data['frequency_time_'.$ch])) or (!empty($data['contact_pause_start_date_'.$ch]) and !empty($data['contact_pause_end_date_'.$ch]))) {
+                $frequencyRule = (isset($frequencyRules[$ch])) ? $frequencyRules[$ch] : new FrequencyRule();
+                $frequencyRule->setChannel($ch);
+                $frequencyRule->setLead($lead);
+                $frequencyRule->setDateAdded(new \DateTime());
+                if (!empty($data['frequency_number_'.$ch]) and !empty($data['frequency_time_'.$ch])) {
+                    $frequencyRule->setFrequencyNumber($data['frequency_number_'.$ch]);
+                    $frequencyRule->setFrequencyTime($data['frequency_time_'.$ch]);
+                }
+
+                if (!empty($data['contact_pause_start_date_'.$ch]) and !empty($data['contact_pause_end_date_'.$ch])) {
+                    $frequencyRule->setPauseFromDate($data['contact_pause_start_date_'.$ch]);
+                    $frequencyRule->setPauseToDate($data['contact_pause_end_date_'.$ch]);
+                }
+
+                $frequencyRule->setLead($lead);
+                if ($data['preferred_channel'] == $ch) {
+                    $frequencyRule->setPreferredChannel(true);
+                } else {
+                    $frequencyRule->setPreferredChannel(false);
+                }
+                $entities[$ch] = $frequencyRule;
+            }
         }
 
         if (!empty($entities)) {
             $this->em->getRepository('MauticLeadBundle:FrequencyRule')->saveEntities($entities);
+        }
+
+        foreach ($data['lead_lists'] as $leadList) {
+            if (!isset($leadLists[$leadList])) {
+                $this->addToLists($lead, [$leadList]);
+            }
+        }
+        // Delete lists that were removed
+        $deletedLists = array_diff(array_keys($leadLists), $data['lead_lists']);
+        if (!empty($deletedLists)) {
+            $this->removeFromLists($lead, $deletedLists);
+        }
+
+        if (!empty($data['global_categories'])) {
+            $this->addToCategory($lead, $data['global_categories']);
+        }
+        $leadCategories = $this->getLeadCategories($lead);
+        // Delete categories that were removed
+        $deletedCategories = array_diff($leadCategories, $data['global_categories']);
+
+        if (!empty($deletedCategories)) {
+            $this->logger->error(print_r('hello', true));
+            $this->removeFromCategories($deletedCategories);
         }
 
         // Delete channels that were removed
@@ -1349,6 +1409,68 @@ class LeadModel extends FormModel
         }
 
         return true;
+    }
+
+    /**
+     * @param Lead $lead
+     * @param $categories
+     * @param bool $manuallyAdded
+     *
+     * @return array
+     */
+    public function addToCategory(Lead $lead, $categories, $manuallyAdded = true)
+    {
+        $leadCategories = $this->getLeadCategoryRepository()->getLeadCategories($lead);
+
+        $results = [];
+        foreach ($categories as $category) {
+            if (!isset($leadCategories[$category])) {
+                $newLeadCategory = new LeadCategory();
+                $newLeadCategory->setLead($lead);
+                if (!$category instanceof Category) {
+                    $category = $this->categoryModel->getEntity($category);
+                }
+                $newLeadCategory->setCategory($category);
+                $newLeadCategory->setDateAdded(new \DateTime());
+                $newLeadCategory->setManuallyAdded($manuallyAdded);
+                $results[$category->getId()] = $newLeadCategory;
+            }
+        }
+        if (!empty($results)) {
+            $this->getLeadCategoryRepository()->saveEntities($results);
+        }
+
+        return $results;
+    }
+
+    public function removeFromCategories($categories)
+    {
+        $deleteCats = [];
+        if (is_array($categories)) {
+            foreach ($categories as $key => $category) {
+                $category     = $this->getLeadCategoryRepository()->getEntity($key);
+                $deleteCats[] = $category;
+            }
+        } elseif ($categories instanceof Category) {
+            $deleteCats[] = $categories;
+        }
+        foreach ($deleteCats as $cats) {
+            $this->logger->error(print_r($cats->getId(), true));
+        }
+        if (!empty($deleteCats)) {
+            $this->getLeadCategoryRepository()->deleteEntities($deleteCats);
+        }
+    }
+
+    public function getLeadCategories(Lead $lead)
+    {
+        $leadCategories   = $this->getLeadCategoryRepository()->getLeadCategories($lead);
+        $leadCategoryList = [];
+        foreach ($leadCategories as $category) {
+            $leadCategoryList[$category['id']] = $category['category_id'];
+        }
+
+        return $leadCategoryList;
     }
 
     /**
@@ -2149,7 +2271,6 @@ class LeadModel extends FormModel
 
         return $event->getEventCounter();
     }
-
     /**
      * @param Lead $lead
      * @param      $company
@@ -2172,5 +2293,38 @@ class LeadModel extends FormModel
         }
 
         return false;
+    }
+
+    /**
+     * Get contact channels.
+     *
+     * @return array
+     */
+    public function getContactChannels(Lead $lead)
+    {
+        $channels = $this->getAllChannels();
+
+        foreach ($channels as $channel) {
+            if ($this->isContactable($lead, $channel)) {
+                unset($channels[$channel]);
+            }
+        }
+
+        return $channels;
+    }
+
+    /**
+     * Get contact channels.
+     *
+     * @return array
+     */
+    public function getAllChannels()
+    {
+        $event = new ChannelEvent();
+
+        $this->dispatcher->dispatch(LeadEvents::ADD_CHANNEL, $event);
+        $channels = $event->getChannels();
+
+        return $channels;
     }
 }

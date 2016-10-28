@@ -378,7 +378,10 @@ return [
                 'alias' => 'lead_merge',
             ],
             'mautic.form.type.lead_contact_frequency_rules' => [
-                'class' => 'Mautic\LeadBundle\Form\Type\ContactFrequencyType',
+                'class'     => 'Mautic\LeadBundle\Form\Type\ContactFrequencyType',
+                'arguments' => [
+                    'mautic.lead.model.lead',
+                ],
                 'alias' => 'lead_contact_frequency_rules',
             ],
             'mautic.form.type.campaignevent_lead_field_value' => [
@@ -421,6 +424,11 @@ return [
                 ],
                 'alias' => 'company_list',
             ],
+            'mautic.form.type.lead_categories' => [
+                'class'     => 'Mautic\LeadBundle\Form\Type\LeadCategoryType',
+                'arguments' => 'mautic.category.model.category',
+                'alias'     => 'leadcategory_choices',
+            ],
         ],
         'other' => [
             'mautic.lead.doctrine.subscriber' => [
@@ -461,6 +469,7 @@ return [
                     'mautic.lead.model.list',
                     'form.factory',
                     'mautic.lead.model.company',
+                    'mautic.category.model.category',
                 ],
             ],
             'mautic.lead.model.field' => [
