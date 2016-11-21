@@ -421,7 +421,7 @@ class CommonController extends Controller implements MauticController
             return $this->{"{$objectAction}Action"}($objectId, $objectModel);
         }
 
-        return $this->accessDenied();
+        return $this->notFound();
     }
 
     /**

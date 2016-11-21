@@ -52,7 +52,7 @@ if (is_array($item)) {
             <li>
                 <?php echo $view->render('MauticCoreBundle:Helper:confirm.html.php', [
                     'btnClass'      => false,
-                    'message'       => $view['translator']->trans('mautic.'.$langVar.'.form.confirmdelete', ['%name%' => $name.' ('.$id.')']),
+                    'message'       => $view['translator']->trans($translationBase.'.form.confirmdelete', ['%name%' => $name.' ('.$id.')']),
                     'confirmAction' => $view['router']->path($actionRoute, array_merge(['objectAction' => 'delete', 'objectId' => $id], $query)),
                     'template'      => 'delete',
                 ]); ?>

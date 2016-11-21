@@ -13,6 +13,7 @@ namespace Mautic\LeadBundle\Model;
 
 use Mautic\CategoryBundle\Entity\Category;
 use Mautic\CategoryBundle\Model\CategoryModel;
+use Mautic\ChannelBundle\Helper\ChannelListHelper;
 use Mautic\CoreBundle\Entity\IpAddress;
 use Mautic\CoreBundle\Helper\Chart\ChartQuery;
 use Mautic\CoreBundle\Helper\Chart\LineChart;
@@ -35,7 +36,6 @@ use Mautic\LeadBundle\Entity\PointsChangeLog;
 use Mautic\LeadBundle\Entity\StagesChangeLog;
 use Mautic\LeadBundle\Entity\Tag;
 use Mautic\LeadBundle\Entity\UtmTag;
-use Mautic\LeadBundle\Event\ChannelEvent;
 use Mautic\LeadBundle\Event\LeadChangeEvent;
 use Mautic\LeadBundle\Event\LeadEvent;
 use Mautic\LeadBundle\Event\LeadMergeEvent;
@@ -110,6 +110,11 @@ class LeadModel extends FormModel
     protected $formFactory;
 
     /**
+     * @var ChannelListHelper
+     */
+    protected $channelListHelper;
+
+    /**
      * LeadModel constructor.
      *
      * @param RequestStack      $requestStack
@@ -120,6 +125,9 @@ class LeadModel extends FormModel
      * @param FieldModel        $leadFieldModel
      * @param ListModel         $leadListModel
      * @param FormFactory       $formFactory
+     * @param CompanyModel      $companyModel
+     * @param CategoryModel     $categoryModel
+     * @param ChannelListHelper $channelListHelper
      */
     public function __construct(
         RequestStack $requestStack,
@@ -131,7 +139,8 @@ class LeadModel extends FormModel
         ListModel $leadListModel,
         FormFactory $formFactory,
         CompanyModel $companyModel,
-        CategoryModel $categoryModel
+        CategoryModel $categoryModel,
+        ChannelListHelper $channelListHelper
     ) {
         $this->request           = $requestStack->getCurrentRequest();
         $this->cookieHelper      = $cookieHelper;
@@ -143,6 +152,7 @@ class LeadModel extends FormModel
         $this->companyModel      = $companyModel;
         $this->formFactory       = $formFactory;
         $this->categoryModel     = $categoryModel;
+        $this->channelListHelper = $channelListHelper;
     }
 
     /**
@@ -1665,6 +1675,7 @@ class LeadModel extends FormModel
             if (isset($fieldData[$leadField['alias']])) {
 
                 // Adjust the boolean values from text to boolean
+
                 if ($leadField['type'] == 'boolean') {
                     $fieldData[$leadField['alias']] = (int) filter_var($fieldData[$leadField['alias']], FILTER_VALIDATE_BOOLEAN);
                 }
@@ -2302,28 +2313,13 @@ class LeadModel extends FormModel
      */
     public function getContactChannels(Lead $lead)
     {
-        $channels = $this->getAllChannels();
+        $channels = $this->channelListHelper->getAllChannels();
 
         foreach ($channels as $channel) {
             if ($this->isContactable($lead, $channel)) {
                 unset($channels[$channel]);
             }
         }
-
-        return $channels;
-    }
-
-    /**
-     * Get contact channels.
-     *
-     * @return array
-     */
-    public function getAllChannels()
-    {
-        $event = new ChannelEvent();
-
-        $this->dispatcher->dispatch(LeadEvents::ADD_CHANNEL, $event);
-        $channels = $event->getChannels();
 
         return $channels;
     }

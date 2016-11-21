@@ -134,7 +134,7 @@ class PublicController extends CommonFormController
 
                 $action      = $this->generateUrl('mautic_contact_action', ['objectAction' => 'contactFrequency', 'objectId' => $lead->getId()]);
                 $channels    = $leadModel->getContactPreferredChannels($lead);
-                $allChannels = $leadModel->getAllChannels();
+                $allChannels = $this->get('mautic.channel.helper.channel_list')->getAllChannels();
 
             /** @var \Mautic\LeadBundle\Model\ListModel $listModel */
             $listModel = $this->getModel('lead.list');
@@ -573,6 +573,8 @@ class PublicController extends CommonFormController
             $idHash = substr($idHash.$idHash, 0, 13); // 13 bytes length
 
             $stat = $model->getEmailStatus($idHash);
+
+            $stat->setSource('email.client');
 
             // stat doesn't exist, create one
             if ($stat === null) {

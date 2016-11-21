@@ -63,18 +63,20 @@ class EntityLookupChoiceLoader implements ChoiceLoaderInterface
      * @param ModelFactory        $modelFactory
      * @param TranslatorInterface $translator
      * @param Connection          $connection
+     * @param array               $options
      */
-    public function __construct(ModelFactory $modelFactory, TranslatorInterface $translator, Connection $connection)
+    public function __construct(ModelFactory $modelFactory, TranslatorInterface $translator, Connection $connection, $options = [])
     {
         $this->modelFactory = $modelFactory;
         $this->translator   = $translator;
         $this->connection   = $connection;
+        $this->options      = $options;
     }
 
     /**
-     * @param $options
+     * @param Options|array $options
      */
-    public function setOptions(Options $options)
+    public function setOptions($options)
     {
         $this->options = $options;
     }
@@ -164,26 +166,61 @@ class EntityLookupChoiceLoader implements ChoiceLoaderInterface
                     throw new \InvalidArgumentException(get_class($model).' must implement '.AjaxLookupModelInterface::class);
                 }
 
-                $alias     = $model->getRepository()->getTableAlias();
-                $expr      = new ExpressionBuilder($this->connection);
-                $composite = $expr->andX();
-                $composite->add(
-                    $expr->in($alias.'.id', $data)
-                );
+                $args = (isset($this->options['lookup_arguments'])) ? $this->options['lookup_arguments'] : [];
+                if ($dataPlaceholder = array_search('$data', $args)) {
+                    $args[$dataPlaceholder] = $data;
+                }
 
-                $validChoices = $model->getRepository()->getSimpleList($composite, [], $labelColumn, $idColumn);
-                $choices      = [];
-                foreach ($validChoices as $choice) {
-                    $choices[$choice['value']] = $choice['label'];
+                $choices = [];
+                if (isset($this->options['model_lookup_method'])) {
+                    $choices = call_user_func_array([$model, $this->options['model_lookup_method']], $args);
+                } elseif (isset($this->options['repo_lookup_method'])) {
+                    $choices = call_user_func_array([$model->getRepository(), $this->options['model_lookup_method']], $args);
+                } else {
+                    $alias     = $model->getRepository()->getTableAlias();
+                    $expr      = new ExpressionBuilder($this->connection);
+                    $composite = $expr->andX();
+                    $composite->add(
+                        $expr->in($alias.'.id', $data)
+                    );
+
+                    $validChoices = $model->getRepository()->getSimpleList($composite, [], $labelColumn, $idColumn);
+
+                    foreach ($validChoices as $choice) {
+                        $choices[$choice['value']] = $choice['label'];
+                    }
                 }
 
                 $this->choices[$modelName] = $choices;
             }
         }
 
-        $choices = ($includeNew && $modalRoute) ? array_replace(['new' => $this->translator->trans('mautic.core.createnew')], $this->choices[$modelName]) : $this->choices[$modelName];
-
         // must be [$label => $id]
-        return array_flip($choices);
+        $prepped = $this->prepareChoices($this->choices[$modelName]);
+
+        if ($includeNew && $modalRoute) {
+            $prepped = array_replace([$this->translator->trans('mautic.core.createnew') => 'new'], $prepped);
+        }
+
+        return $prepped;
+    }
+
+    /**
+     * @param $choices
+     *
+     * @return array
+     */
+    protected function prepareChoices($choices)
+    {
+        $prepped   = $choices;
+        $isGrouped = false;
+        foreach ($prepped as $key => &$choice) {
+            if (is_array($choice)) {
+                $isGrouped = true;
+                $choice    = $this->prepareChoices($choice);
+            }
+        }
+
+        return ($isGrouped) ? $prepped : array_flip($prepped);
     }
 }

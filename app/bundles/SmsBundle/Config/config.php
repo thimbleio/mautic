@@ -54,9 +54,8 @@ return [
                 'alias'     => 'smssend_list',
             ],
             'mautic.form.type.sms_list' => [
-                'class'     => 'Mautic\SmsBundle\Form\Type\SmsListType',
-                'arguments' => 'mautic.factory',
-                'alias'     => 'sms_list',
+                'class' => 'Mautic\SmsBundle\Form\Type\SmsListType',
+                'alias' => 'sms_list',
             ],
         ],
         'helpers' => [

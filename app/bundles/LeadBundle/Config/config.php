@@ -470,6 +470,7 @@ return [
                     'form.factory',
                     'mautic.lead.model.company',
                     'mautic.category.model.category',
+                    'mautic.channel.helper.channel_list',
                 ],
             ],
             'mautic.lead.model.field' => [

@@ -47,6 +47,9 @@ return [
             'mautic.social.configbundle.subscriber' => [
                 'class' => 'MauticPlugin\MauticSocialBundle\EventListener\ConfigSubscriber',
             ],
+            'mautic.social.subscriber.channel' => [
+                'class' => \MauticPlugin\MauticSocialBundle\EventListener\ChannelSubscriber::class,
+            ],
         ],
         'forms' => [
             'mautic.form.type.social.sociallogin' => [

@@ -11,9 +11,10 @@
 
 namespace Mautic\EmailBundle\EventListener;
 
+use Mautic\ChannelBundle\ChannelEvents;
+use Mautic\ChannelBundle\Event\ChannelEvent;
+use Mautic\ChannelBundle\Model\MessageModel;
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
-use Mautic\LeadBundle\Event\ChannelEvent;
-use Mautic\LeadBundle\LeadEvents;
 
 /**
  * Class ChannelSubscriber.
@@ -26,12 +27,28 @@ class ChannelSubscriber extends CommonSubscriber
     public static function getSubscribedEvents()
     {
         return [
-            LeadEvents::ADD_CHANNEL => ['onAddChannel', 0],
+            ChannelEvents::ADD_CHANNEL => ['onAddChannel', 0],
         ];
     }
 
+    /**
+     * @param ChannelEvent $event
+     */
     public function onAddChannel(ChannelEvent $event)
     {
-        $event->setChannel('email');
+        $event->addChannel(
+            'email',
+            [
+                MessageModel::CHANNEL_FEATURE => [
+                    'lookupFormType' => 'email_list',
+                    'goalsSupported' => [
+                        'email.open',
+                        'page.pagehit',
+                        'asset.download',
+                        'form.submitted',
+                    ],
+                ],
+            ]
+        );
     }
 }

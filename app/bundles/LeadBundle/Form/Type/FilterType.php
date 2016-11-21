@@ -228,8 +228,11 @@ class FilterType extends AbstractType
                         }
                     }
 
-                    $list    = $field['properties']['list'];
-                    $choices = FormFieldHelper::parseList($list);
+                    $choices = [];
+                    if (!empty($field['properties']['list'])) {
+                        $list    = $field['properties']['list'];
+                        $choices = FormFieldHelper::parseList($list);
+                    }
 
                     if ($fieldType == 'select') {
                         // array_unshift cannot be used because numeric values get lost as keys

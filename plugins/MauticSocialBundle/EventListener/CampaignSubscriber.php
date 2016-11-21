@@ -60,7 +60,7 @@ class CampaignSubscriber extends CommonSubscriber
             'description' => 'mautic.social.twitter.tweet.event.open_desc',
             'eventName'   => SocialEvents::ON_CAMPAIGN_TRIGGER_ACTION,
             'formType'    => 'twitter_tweet',
-            'formTheme'   => 'MauticSocialBundle:FormTheme\Campaigns',
+            'formTheme'   => 'MauticSocialBundle:FormTheme',
         ];
 
         $event->addAction('twitter.tweet', $action);

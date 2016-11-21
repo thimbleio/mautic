@@ -1003,14 +1003,15 @@ class CommonRepository extends EntityRepository
     /**
      * Gets a list of published entities as an array id => label.
      *
-     * @param CompositeExpression $expr        Use $factory->getDatabase()->getExpressionBuilder()->andX()
-     * @param array               $parameters  Parameters used in $expr
-     * @param string              $labelColumn Column that houses the label
-     * @param string              $valueColumn Column that houses the value
+     * @param CompositeExpression $expr
+     * @param array               $parameters   Parameters used in $expr
+     * @param string              $labelColumn  Column that houses the label
+     * @param string              $valueColumn  Column that houses the value
+     * @param string              $extraColumns String of extra select columns
      *
      * @return array
      */
-    public function getSimpleList(CompositeExpression $expr = null, array $parameters = [], $labelColumn = null, $valueColumn = 'id')
+    public function getSimpleList(CompositeExpression $expr = null, array $parameters = [], $labelColumn = null, $valueColumn = 'id', $extraColumns = null)
     {
         $q = $this->_em->getConnection()->createQueryBuilder();
 
@@ -1033,7 +1034,7 @@ class CommonRepository extends EntityRepository
             }
         }
 
-        $q->select($prefix.$valueColumn.' as value, '.$prefix.$labelColumn.' as label')
+        $q->select($prefix.$valueColumn.' as value, '.$prefix.$labelColumn.' as label'.($extraColumns ? ", $extraColumns" : ''))
             ->from($tableName, $alias)
             ->orderBy($prefix.$labelColumn);
 

@@ -199,9 +199,8 @@ return [
                 'alias'     => 'emailvariant',
             ],
             'mautic.form.type.email_list' => [
-                'class'     => 'Mautic\EmailBundle\Form\Type\EmailListType',
-                'arguments' => 'mautic.factory',
-                'alias'     => 'email_list',
+                'class' => 'Mautic\EmailBundle\Form\Type\EmailListType',
+                'alias' => 'email_list',
             ],
             'mautic.form.type.emailopen_list' => [
                 'class' => 'Mautic\EmailBundle\Form\Type\EmailOpenType',

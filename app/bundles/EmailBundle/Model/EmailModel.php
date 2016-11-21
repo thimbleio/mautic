@@ -22,6 +22,7 @@ use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\DateTimeHelper;
 use Mautic\CoreBundle\Helper\IpLookupHelper;
 use Mautic\CoreBundle\Helper\ThemeHelper;
+use Mautic\CoreBundle\Model\AjaxLookupModelInterface;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\CoreBundle\Model\MessageQueueModel;
 use Mautic\CoreBundle\Model\TranslationModelTrait;
@@ -52,7 +53,7 @@ use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
  * Class EmailModel
  * {@inheritdoc}
  */
-class EmailModel extends FormModel
+class EmailModel extends FormModel implements AjaxLookupModelInterface
 {
     use VariantModelTrait;
     use TranslationModelTrait;
@@ -700,6 +701,7 @@ class EmailModel extends FormModel
 
         return $chart->render();
     }
+
     /**
      * Get a stats for email by list.
      *
@@ -2028,6 +2030,41 @@ class EmailModel extends FormModel
     public function getVariants(Email $entity)
     {
         return $entity->getVariants();
+    }
+
+    /**
+     * @param        $type
+     * @param string $filter
+     * @param int    $limit
+     * @param int    $start
+     */
+    public function getLookupResults($type, $filter = '', $limit = 10, $start = 0, $options = [])
+    {
+        $results = [];
+        switch ($type) {
+            case 'email':
+                $emails = $this->getRepository()->getEmailList(
+                    $filter,
+                    $limit,
+                    $start,
+                    $this->security->isGranted('email:emails:viewother'),
+                    isset($options['top_level']) ? $options['top_level'] : false,
+                    isset($options['email_type']) ? $options['email_type'] : null,
+                    isset($options['ignore_ids']) ? $options['ignore_ids'] : [],
+                    isset($options['variant_parent']) ? $options['variant_parent'] : null
+                );
+
+                foreach ($emails as $email) {
+                    $results[$email['language']][$email['id']] = $email['name'];
+                }
+
+                //sort by language
+                ksort($results);
+
+                break;
+        }
+
+        return $results;
     }
 
     /**

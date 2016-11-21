@@ -42,7 +42,9 @@ include 'action_button_helper.php';
 
             if (!empty($templateButtons['delete'])):
                 echo $view->render('MauticCoreBundle:Helper:confirm.html.php', [
-                    'message'       => $view['translator']->trans('mautic.'.$langVar.'.form.confirmbatchdelete'),
+                    'message' => $view['translator']->hasId($translationBase.'.form.confirmbatchdelete') ?
+                        $view['translator']->trans($translationBase.'.form.confirmbatchdelete') :
+                        $view['translator']->trans('mautic.core.form.confirmbatchdelete'),
                     'confirmAction' => $view['router']->path($actionRoute, array_merge(['objectAction' => 'batchDelete'], $query)),
                     'template'      => 'batchdelete',
                     'tooltip'       => $view['translator']->trans('mautic.core.form.tooltip.bulkdelete'),

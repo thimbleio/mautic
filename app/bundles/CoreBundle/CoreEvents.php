@@ -107,15 +107,6 @@ final class CoreEvents
     const MAINTENANCE_CLEANUP_DATA = 'mautic.maintenance_cleanup_data';
 
     /**
-     * The mautic.channel_broadcast event is dispatched by the mautic:send:broadcast command to process communication to pending contacts.
-     *
-     * The event listener receives a Mautic\CoreBundle\Event\ChannelBroadcastEvent instance.
-     *
-     * @var string
-     */
-    const CHANNEL_BROADCAST = 'mautic.channel_broadcast';
-
-    /**
      * The mautic.message_queued event is dispatched to save a message to the queue.
      *
      * The event listener receives a Mautic\CoreBundle\Event\MessageQueueEvent instance.
@@ -141,4 +132,15 @@ final class CoreEvents
      * @var string
      */
     const PROCESS_MESSAGE_QUEUE_BATCH = 'mautic.process_message_queue_batch';
+
+    /**
+     * The mautic.channel_broadcast event is dispatched by the mautic:send:broadcast command to process communication to pending contacts.
+     *
+     * The event listener receives a Mautic\CoreBundle\Event\ChannelBroadcastEvent instance.
+     *
+     * @deprecated 2.3, to be removed in 3.0. Use Mautic\ChannelBundle\ChannelEvents::CHANNEL_BROADCAST instead
+     *
+     * @var string
+     */
+    const CHANNEL_BROADCAST = 'mautic.bc_channel_broadcast';
 }

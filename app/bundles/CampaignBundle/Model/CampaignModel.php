@@ -448,9 +448,11 @@ class CampaignModel extends CommonFormModel
     /**
      * Gets array of custom events from bundles subscribed CampaignEvents::CAMPAIGN_ON_BUILD.
      *
+     * @param string|null $type Specific type of events to retreive
+     *
      * @return mixed
      */
-    public function getEvents()
+    public function getEvents($type = null)
     {
         static $events;
 
@@ -499,6 +501,14 @@ class CampaignModel extends CommonFormModel
 
             $events['connectionResrictions'] = $associationRestrictions;
             $events['anchorRestrictions']    = $anchorRestrictions;
+        }
+
+        if (null !== $type) {
+            if (!isset($events[$type])) {
+                throw new \InvalidArgumentException("$type not found as array key");
+            }
+
+            return $events[$type];
         }
 
         return $events;
