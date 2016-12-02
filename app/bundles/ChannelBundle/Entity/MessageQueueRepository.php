@@ -9,7 +9,9 @@
  * @license     GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
-namespace Mautic\CoreBundle\Entity;
+namespace Mautic\ChannelBundle\Entity;
+
+use Mautic\CoreBundle\Entity\CommonRepository;
 
 /**
  * MessageQueueRepository.

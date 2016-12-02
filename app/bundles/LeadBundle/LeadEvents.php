@@ -394,7 +394,7 @@ final class LeadEvents
     const FORM_SUBMIT_REMOVE_DO_NO_CONTACT = 'mautic.form_submit_remove_do_no_contact';
 
     /**
-     * @deprecated - 2.4; use ChannelEvents::ADD_CHANNEL
+     * @deprecated - 2.4 to be removed in 3.0; use Mautic\ChannelBundle\ChannelEvents::ADD_CHANNEL
      *
      * The mautic.add_channel event registers communication channels.
      *
@@ -402,5 +402,5 @@ final class LeadEvents
      *
      * @var string
      */
-    const ADD_CHANNEL = 'mautic.add_channel';
+    const ADD_CHANNEL = 'mautic.bc_add_channel';
 }

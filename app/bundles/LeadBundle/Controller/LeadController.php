@@ -962,7 +962,7 @@ class LeadController extends FormController
 
             $action                = $this->generateUrl('mautic_contact_action', ['objectAction' => 'contactFrequency', 'objectId' => $lead->getId()]);
             $channels              = $model->getDoNotContactChannels($lead);
-            $allChannels           = $this->get('mautic.channel.helper.channel_list')->getAllChannels();
+            $allChannels           = $model->getPreferenceChannels();
             $data['channels']      = $allChannels;
             $data['lead_channels'] = $channels;
             $data['leadId']        = $lead->getId();

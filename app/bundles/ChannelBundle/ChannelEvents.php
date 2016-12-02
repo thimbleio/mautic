@@ -33,4 +33,31 @@ final class ChannelEvents
      * @var string
      */
     const CHANNEL_BROADCAST = 'mautic.channel_broadcast';
+
+    /**
+     * The mautic.message_queued event is dispatched to save a message to the queue.
+     *
+     * The event listener receives a Mautic\ChannelBundle\Event\MessageQueueEvent instance.
+     *
+     * @var string
+     */
+    const MESSAGE_QUEUED = 'mautic.message_queued';
+
+    /**
+     * The mautic.process_message_queue event is dispatched to be processed by a listener.
+     *
+     * The event listener receives a Mautic\ChannelBundle\Event\MessageQueueProcessEvent instance.
+     *
+     * @var string
+     */
+    const PROCESS_MESSAGE_QUEUE = 'mautic.process_message_queue';
+
+    /**
+     * The mautic.process_message_queue_batch event is dispatched to process a batch of messages by channel and channel ID.
+     *
+     * The event listener receives a Mautic\ChannelBundle\Event\MessageQueueBatchProcessEvent instance.
+     *
+     * @var string
+     */
+    const PROCESS_MESSAGE_QUEUE_BATCH = 'mautic.process_message_queue_batch';
 }

@@ -76,18 +76,22 @@ EOT
 
         $dispatcher = $this->getContainer()->get('event_dispatcher');
 
-        /** @deprecated BC support to be removed in 3.0 */
-        $bcEvent = $dispatcher->dispatch(
-            CoreEvents::CHANNEL_BROADCAST,
-            new BcChannelBroadcastEvent($channel, $channelId, $output)
-        );
-
+        /** @var ChannelBroadcastEvent $event */
         $event = $dispatcher->dispatch(
             ChannelEvents::CHANNEL_BROADCAST,
             new ChannelBroadcastEvent($channel, $channelId, $output)
         );
+        $results = $event->getResults();
 
-        $results = array_merge($bcEvent->getResults(), $event->getResults());
+        // @deprecated 2.4 to be removed in 3.0; BC support
+        if ($dispatcher->hasListeners(CoreEvents::CHANNEL_BROADCAST)) {
+            /** @var BcChannelBroadcastEvent $bcEvent */
+            $bcEvent = $dispatcher->dispatch(
+                CoreEvents::CHANNEL_BROADCAST,
+                new BcChannelBroadcastEvent($channel, $channelId, $output)
+            );
+            $results = array_merge($results, $bcEvent->getResults());
+        }
 
         $rows = [];
         foreach ($results as $channel => $counts) {

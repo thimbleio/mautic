@@ -22,19 +22,19 @@ use Symfony\Component\Translation\TranslatorInterface;
 class ChannelListHelper
 {
     /**
-     * @var ChannelEvent
-     */
-    protected $event;
-
-    /**
      * @var TranslatorInterface
      */
     protected $translator;
 
     /**
-     * @var
+     * @var array
      */
-    protected $channels;
+    protected $channels = [];
+
+    /**
+     * @var array
+     */
+    protected $featureChannels = [];
 
     /**
      * ChannelListHelper constructor.
@@ -44,8 +44,20 @@ class ChannelListHelper
      */
     public function __construct(EventDispatcherInterface $dispatcher, TranslatorInterface $translator)
     {
-        $this->event      = $dispatcher->dispatch(ChannelEvents::ADD_CHANNEL, new ChannelEvent());
         $this->translator = $translator;
+
+        $event                 = $dispatcher->dispatch(ChannelEvents::ADD_CHANNEL, new ChannelEvent());
+        $this->channels        = $event->getChannels();
+        $this->featureChannels = $event->getFeatureChannels();
+        unset($event);
+
+        // @deprecated 2.4 to be removed 3.0; BC support
+        if ($dispatcher->hasListeners(\Mautic\LeadBundle\LeadEvents::ADD_CHANNEL)) {
+            $event                 = $dispatcher->dispatch(\Mautic\LeadBundle\LeadEvents::ADD_CHANNEL, new \Mautic\LeadBundle\Event\ChannelEvent());
+            $this->channels        = array_merge($this->channels, $event->getChannels());
+            $this->featureChannels = array_merge($this->featureChannels, $event->getFeatureChannels());
+            unset($event);
+        }
     }
 
     /**
@@ -55,17 +67,13 @@ class ChannelListHelper
      */
     public function getChannelList()
     {
-        if (!count($this->channels)) {
-            $allChannels = $this->event->getChannels();
-            $channels    = [];
-            foreach ($allChannels as $channel => $details) {
-                $channelName            = isset($details['label']) ? $this->translator->trans($details['label']) : $this->getChannelLabel($channel);
-                $channels[$channelName] = $channel;
-            }
-            $this->channels = $channels;
+        $channels = [];
+        foreach ($this->channels as $channel => $details) {
+            $channelName            = isset($details['label']) ? $this->translator->trans($details['label']) : $this->getChannelLabel($channel);
+            $channels[$channelName] = $channel;
         }
 
-        return $this->channels;
+        return $channels;
     }
 
     /**
@@ -82,7 +90,7 @@ class ChannelListHelper
 
         $channels = [];
         foreach ($features as $feature) {
-            $featureChannels = $this->event->getFeatureChannels($feature);
+            $featureChannels = (isset($this->featureChannels[$feature])) ? $this->featureChannels[$feature] : [];
             $returnChannels  = [];
             foreach ($featureChannels as $channel => $details) {
                 if (!isset($details['label'])) {
@@ -111,7 +119,7 @@ class ChannelListHelper
      */
     public function getChannels()
     {
-        return $this->event->getChannels();
+        return $this->channels;
     }
 
     /**

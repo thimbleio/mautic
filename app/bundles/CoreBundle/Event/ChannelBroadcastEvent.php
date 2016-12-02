@@ -11,10 +11,12 @@
 
 namespace Mautic\CoreBundle\Event;
 
+@trigger_error('Mautic\CoreBundle\Event\ChannelBroadcastEvent was deprecated in 2.4 and to be removed in 3.0 Use \Mautic\ChannelBundle\Event\ChannelBroadcastEvent instead', E_DEPRECATED);
+
 /**
  * Class ChannelBroadcastEvent.
  *
- * @deprecated use \Mautic\ChannelBundle\Event\ChannelBroadcastEvent instead; to be removed in 3.0
+ * @deprecated 2.4 to be removed in 3.0; use \Mautic\ChannelBundle\Event\ChannelBroadcastEvent instead
  */
 class ChannelBroadcastEvent extends \Mautic\ChannelBundle\Event\ChannelBroadcastEvent
 {

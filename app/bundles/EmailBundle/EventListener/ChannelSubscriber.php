@@ -15,6 +15,7 @@ use Mautic\ChannelBundle\ChannelEvents;
 use Mautic\ChannelBundle\Event\ChannelEvent;
 use Mautic\ChannelBundle\Model\MessageModel;
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
+use Mautic\LeadBundle\Model\LeadModel;
 
 /**
  * Class ChannelSubscriber.
@@ -48,6 +49,7 @@ class ChannelSubscriber extends CommonSubscriber
                         'form.submitted',
                     ],
                 ],
+                LeadModel::CHANNEL_FEATURE => [],
             ]
         );
     }

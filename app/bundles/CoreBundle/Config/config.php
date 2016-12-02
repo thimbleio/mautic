@@ -686,6 +686,7 @@ return [
             'mautic.core.model.form' => [
                 'class' => 'Mautic\CoreBundle\Model\FormModel',
             ],
+            /* @deprecated - 2.4 to be removed in 3.0; use mautic.channel.model.queue instead */
             'mautic.core.model.messagequeue' => [
                 'class'     => 'Mautic\CoreBundle\Model\MessageQueueModel',
                 'arguments' => [

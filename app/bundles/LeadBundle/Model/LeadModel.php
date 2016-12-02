@@ -62,6 +62,8 @@ class LeadModel extends FormModel
     private $currentLead       = null;
     private $systemCurrentLead = null;
 
+    const CHANNEL_FEATURE = 'contact_preference';
+
     /**
      * @var null|\Symfony\Component\HttpFoundation\Request
      */
@@ -2367,7 +2369,7 @@ class LeadModel extends FormModel
      */
     public function getDoNotContactChannels(Lead $lead)
     {
-        $allChannels = $this->channelListHelper->getAllChannels();
+        $allChannels = $this->getPreferenceChannels();
 
         $channels = [];
         foreach ($allChannels as $channel) {
@@ -2380,13 +2382,24 @@ class LeadModel extends FormModel
     }
 
     /**
+     * @deprecatd 2.4; to be removed in 3.0
+     * use mautic.channel.helper.channel_list service (Mautic\ChannelBundle\Helper\ChannelListHelper) to obtain the desired channels
+     *
      * Get contact channels.
      *
      * @return array
      */
     public function getAllChannels()
     {
-        return $this->channelListHelper->getAllChannels();
+        return $this->channelListHelper->getChannelList();
+    }
+
+    /**
+     * @return array
+     */
+    public function getPreferenceChannels()
+    {
+        return $this->channelListHelper->getFeatureChannels(self::CHANNEL_FEATURE, true);
     }
 
     /**

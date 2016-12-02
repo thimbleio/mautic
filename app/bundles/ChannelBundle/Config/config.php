@@ -85,6 +85,13 @@ return [
                     'mautic.campaign.model.campaign',
                 ],
             ],
+            'mautic.channel.model.queue' => [
+                'class'     => 'Mautic\ChannelBundle\Model\MessageQueueModel',
+                'arguments' => [
+                    'mautic.lead.model.lead',
+                    'mautic.lead.model.company',
+                ],
+            ],
         ],
     ],
 

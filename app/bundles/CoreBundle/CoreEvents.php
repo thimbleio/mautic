@@ -116,33 +116,6 @@ final class CoreEvents
     const MAINTENANCE_CLEANUP_DATA = 'mautic.maintenance_cleanup_data';
 
     /**
-     * The mautic.message_queued event is dispatched to save a message to the queue.
-     *
-     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueEvent instance.
-     *
-     * @var string
-     */
-    const MESSAGE_QUEUED = 'mautic.message_queued';
-
-    /**
-     * The mautic.process_message_queue event is dispatched to be processed by a listener.
-     *
-     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueProcessEvent instance.
-     *
-     * @var string
-     */
-    const PROCESS_MESSAGE_QUEUE = 'mautic.process_message_queue';
-
-    /**
-     * The mautic.process_message_queue_batch event is dispatched to process a batch of messages by channel and channel ID.
-     *
-     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueBatchProcessEvent instance.
-     *
-     * @var string
-     */
-    const PROCESS_MESSAGE_QUEUE_BATCH = 'mautic.process_message_queue_batch';
-
-    /**
      * The mautic.view_inject_custom_buttons event is dispatched to inject custom buttons into Mautic's UI by plugins/other bundles.
      *
      * The event listener receives a Mautic\CoreBundle\Event\CustomButtonEvent instance.
@@ -156,9 +129,42 @@ final class CoreEvents
      *
      * The event listener receives a Mautic\CoreBundle\Event\ChannelBroadcastEvent instance.
      *
-     * @deprecated 2.3, to be removed in 3.0. Use Mautic\ChannelBundle\ChannelEvents::CHANNEL_BROADCAST instead
+     * @deprecated 2.4 to be removed in 3.0. Use Mautic\CoreBundle\ChannelEvents::CHANNEL_BROADCAST instead
      *
      * @var string
      */
     const CHANNEL_BROADCAST = 'mautic.bc_channel_broadcast';
+
+    /**
+     * The mautic.message_queued event is dispatched to save a message to the queue.
+     *
+     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueEvent instance.
+     *
+     * @deprecated 2.4 to be removed in 3.0. Use Mautic\CoreBundle\ChannelEvents::CHANNEL_BROADCAST instead
+     *
+     * @var string
+     */
+    const MESSAGE_QUEUED = 'mautic.bc_message_queued';
+
+    /**
+     * The mautic.process_message_queue event is dispatched to be processed by a listener.
+     *
+     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueProcessEvent instance.
+     *
+     * @deprecated 2.4 to be removed in 3.0. Use Mautic\CoreBundle\ChannelEvents::CHANNEL_BROADCAST instead
+     *
+     * @var string
+     */
+    const PROCESS_MESSAGE_QUEUE = 'bc_mautic.process_message_queue';
+
+    /**
+     * The mautic.process_message_queue_batch event is dispatched to process a batch of messages by channel and channel ID.
+     *
+     * The event listener receives a Mautic\CoreBundle\Event\MessageQueueBatchProcessEvent instance.
+     *
+     * @deprecated 2.4 to be removed in 3.0. Use Mautic\CoreBundle\ChannelEvents::CHANNEL_BROADCAST instead
+     *
+     * @var string
+     */
+    const PROCESS_MESSAGE_QUEUE_BATCH = 'bc_mautic.process_message_queue_batch';
 }

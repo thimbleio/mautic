@@ -13,7 +13,8 @@ namespace Mautic\EmailBundle\Model;
 
 use DeviceDetector\DeviceDetector;
 use Doctrine\DBAL\Query\QueryBuilder;
-use Mautic\CoreBundle\Entity\MessageQueue;
+use Mautic\ChannelBundle\Entity\MessageQueue;
+use Mautic\ChannelBundle\Model\MessageQueueModel;
 use Mautic\CoreBundle\Helper\Chart\BarChart;
 use Mautic\CoreBundle\Helper\Chart\ChartQuery;
 use Mautic\CoreBundle\Helper\Chart\LineChart;
@@ -24,7 +25,6 @@ use Mautic\CoreBundle\Helper\IpLookupHelper;
 use Mautic\CoreBundle\Helper\ThemeHelper;
 use Mautic\CoreBundle\Model\AjaxLookupModelInterface;
 use Mautic\CoreBundle\Model\FormModel;
-use Mautic\CoreBundle\Model\MessageQueueModel;
 use Mautic\CoreBundle\Model\TranslationModelTrait;
 use Mautic\CoreBundle\Model\VariantModelTrait;
 use Mautic\EmailBundle\EmailEvents;

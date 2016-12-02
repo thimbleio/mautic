@@ -26,17 +26,7 @@ class ChannelEvent extends CommonEvent
     /**
      * @var array
      */
-    protected $channelsBySupportedFeature = [];
-
-    /**
-     * Returns the channel.
-     *
-     * @return string
-     */
-    public function getChannels()
-    {
-        return $this->channels;
-    }
+    protected $featureChannels = [];
 
     /**
      * Adds a submit action to the list of available actions.
@@ -61,10 +51,20 @@ class ChannelEvent extends CommonEvent
         $this->channels[$channel] = $config;
 
         foreach ($config as $feature => $featureConfig) {
-            $this->channelsBySupportedFeature[$feature][$channel] = $featureConfig;
+            $this->featureChannels[$feature][$channel] = $featureConfig;
         }
 
         return $this;
+    }
+
+    /**
+     * Returns the channel.
+     *
+     * @return string
+     */
+    public function getChannels()
+    {
+        return $this->channels;
     }
 
     /**
@@ -72,8 +72,8 @@ class ChannelEvent extends CommonEvent
      *
      * @return array
      */
-    public function getFeatureChannels($feature)
+    public function getFeatureChannels()
     {
-        return (isset($this->channelsBySupportedFeature[$feature])) ? $this->channelsBySupportedFeature[$feature] : [];
+        return $this->featureChannels;
     }
 }

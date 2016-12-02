@@ -15,6 +15,7 @@ use Mautic\ChannelBundle\ChannelEvents;
 use Mautic\ChannelBundle\Event\ChannelEvent;
 use Mautic\ChannelBundle\Model\MessageModel;
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
+use Mautic\LeadBundle\Model\LeadModel;
 
 /**
  * Class ChannelSubscriber.
@@ -40,6 +41,7 @@ class ChannelSubscriber extends CommonSubscriber
                     MessageModel::CHANNEL_FEATURE => [
                         'lookupFormType' => 'sms_list',
                     ],
+                    LeadModel::CHANNEL_FEATURE => [],
                 ]
             );
         }

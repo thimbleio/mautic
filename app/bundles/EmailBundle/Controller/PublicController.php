@@ -199,7 +199,7 @@ class PublicController extends CommonFormController
 
                     $action      = $this->generateUrl('mautic_email_unsubscribe', ['idHash' => $idHash]);
                     $channels    = $leadModel->getDoNotContactChannels($lead);
-                    $allChannels = $this->get('mautic.channel.helper.channel_list')->getAllChannels();
+                    $allChannels = $leadModel->getPreferenceChannels();
                     /** @var \Mautic\CategoryBundle\Model\CategoryModel $categoryModel */
                     $categoryModel         = $this->getModel('category.category');
                     $categories            = $categoryModel->getLookupResults('global');
