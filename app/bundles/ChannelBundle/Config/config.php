@@ -73,6 +73,7 @@ return [
                 'class'     => \Mautic\ChannelBundle\Helper\ChannelListHelper::class,
                 'arguments' => [
                     'event_dispatcher',
+                    'translator',
                 ],
             ],
         ],

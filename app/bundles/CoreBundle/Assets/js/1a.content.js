@@ -80,6 +80,7 @@ Mautic.loadContent = function (route, link, method, target, showPageLoading, cal
                     window["Mautic"][callback].apply('window', []);
                 }
             }
+            Mautic.generatePageTitle( route );
             delete Mautic.loadContentXhr[target];
         }
     });
@@ -87,6 +88,33 @@ Mautic.loadContent = function (route, link, method, target, showPageLoading, cal
     //prevent firing of href link
     //mQuery(link).attr("href", "javascript: void(0)");
     return false;
+};
+
+/**
+ * Generates the title of the current page
+ *
+ * @param route
+ */
+Mautic.generatePageTitle = function(route) {
+    if( -1 !== route.indexOf('view') ){
+        //loading view of module title
+        var currentModule = route.split('/')[3];
+
+        //check if we find spans
+        var titleWithHTML = mQuery('.page-header h3').find('span.span-block');
+        var currentModuleItem = '';
+
+        if( 1 < titleWithHTML.length ){
+            currentModuleItem = titleWithHTML.eq(0).text() + ' - ' + titleWithHTML.eq(1).text();
+        } else {
+            currentModuleItem = mQuery('.page-header h3').text();
+        }
+
+        mQuery('title').html( currentModule[0].toUpperCase() + currentModule.slice(1) + ' | ' + currentModuleItem + ' | Mautic' );
+    } else {
+        //loading basic title
+        mQuery('title').html( mQuery('.page-header h3').html() + ' | Mautic' );
+    }
 };
 
 /**
@@ -353,6 +381,14 @@ Mautic.onPageLoad = function (container, response, inModal) {
     //spin icons on button click
     mQuery(container + ' .btn:not(.btn-nospin)').on('click.spinningicons', function (event) {
         Mautic.startIconSpinOnEvent(event);
+    });
+
+    mQuery(container + ' input[class=list-checkbox]').on('change', function () {
+        var disabled = Mautic.batchActionPrecheck(container) ? false : true;
+        var color    = (disabled) ? 'btn-default' : 'btn-info';
+        var button   = container + ' th.col-actions .input-group-btn button';
+        mQuery(button).prop('disabled', disabled);
+        mQuery(button).removeClass('btn-default btn-info').addClass(color);
     });
 
     //Copy form buttons to the toolbar

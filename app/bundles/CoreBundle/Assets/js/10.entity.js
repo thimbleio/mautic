@@ -336,10 +336,15 @@ Mautic.executeBatchAction = function (action, el) {
 /**
  * Checks that items are checked before showing confirmation
  *
+ * @param container
  * @returns int
  */
-Mautic.batchActionPrecheck = function() {
-    return mQuery('input[class=list-checkbox]:checked').length;
+Mautic.batchActionPrecheck = function(container) {
+    if (typeof container == 'undefined') {
+        container = '';
+    }
+
+    return mQuery(container + ' input[class=list-checkbox]:checked').length;
 };
 
 /**

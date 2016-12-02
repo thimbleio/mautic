@@ -14,6 +14,7 @@ namespace Mautic\ChannelBundle\Helper;
 use Mautic\ChannelBundle\ChannelEvents;
 use Mautic\ChannelBundle\Event\ChannelEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  * Class ChannelListHelper.
@@ -26,13 +27,25 @@ class ChannelListHelper
     protected $event;
 
     /**
+     * @var TranslatorInterface
+     */
+    protected $translator;
+
+    /**
+     * @var
+     */
+    protected $channels;
+
+    /**
      * ChannelListHelper constructor.
      *
      * @param EventDispatcherInterface $dispatcher
+     * @param TranslatorInterface      $translator
      */
-    public function __construct(EventDispatcherInterface $dispatcher)
+    public function __construct(EventDispatcherInterface $dispatcher, TranslatorInterface $translator)
     {
-        $this->event = $dispatcher->dispatch(ChannelEvents::ADD_CHANNEL, new ChannelEvent());
+        $this->event      = $dispatcher->dispatch(ChannelEvents::ADD_CHANNEL, new ChannelEvent());
+        $this->translator = $translator;
     }
 
     /**
@@ -42,7 +55,19 @@ class ChannelListHelper
      */
     public function getAllChannels()
     {
-        return $this->event->getChannels();
+        if (count($this->channels)) {
+            $allChannels = $this->event->getChannels();
+
+            $channels = [];
+            foreach ($allChannels as $channel) {
+                $channelName = $this->translator->hasId('mautic.channel.'.$channel) ?
+                    $this->translator->trans('mautic.channel.'.$channel) : ucfirst($channel);
+                $channels[$channelName] = $channel;
+            }
+            $this->channels = $channels;
+        }
+
+        return $this->channels;
     }
 
     /**
