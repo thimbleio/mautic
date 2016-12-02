@@ -21,8 +21,17 @@ $formId = $form->getId();
                 <?php
                 if ($canDelete):
                 echo $view->render('MauticCoreBundle:Helper:tableheader.html.php', [
-                    'checkall' => 'true',
-                    'target'   => '#formResultTable',
+                    'checkall'      => 'true',
+                    'target'        => '#formResultTable',
+                    'customButtons' => [
+                        [
+                            'confirm' => [
+                                'message'       => $view['translator']->trans('mautic.form.results.form.confirmbatchdelete'),
+                                'confirmAction' => $view['router']->path('mautic_form_results_delete', ['formId' => $formId]),
+                                'template'      => 'batchdelete',
+                            ],
+                        ],
+                    ],
                 ]);
                 endif;
 

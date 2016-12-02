@@ -25,7 +25,6 @@ if (count($items)):
         $items = $items->getIterator()->getArrayCopy();
     endif;
     $firstItem = reset($items);
-
     ?>
     <div class="table-responsive">
         <table class="table table-hover table-striped table-bordered <?php echo $sessionVar; ?>-list">
@@ -36,7 +35,12 @@ if (count($items)):
                     echo $view->render(
                         'MauticCoreBundle:Helper:tableheader.html.php',
                         [
-                            'checkall' => 'true',
+                            'checkall'        => 'true',
+                            'actionRoute'     => $actionRoute,
+                            'indexRoute'      => $indexRoute,
+                            'templateButtons' => [
+                                'delete' => !empty($permissions[$permissionBase.':deleteown']) || !empty($permissions[$permissionBase.':deleteown']) || !empty($permissions[$permissionBase.':delete']),
+                            ],
                         ]
                     );
 
@@ -123,7 +127,7 @@ if (count($items)):
                                     'actionRoute'     => $actionRoute,
                                     'indexRoute'      => $indexRoute,
                                     'translationBase' => $translationBase,
-                                    'customButtons'   => isset($customButtons) ? $customButtons : '',
+                                    'customButtons'   => isset($customButtons) ? $customButtons : [],
                                 ]
                             );
                             ?>

@@ -241,18 +241,17 @@ class ResultController extends CommonFormController
      */
     public function deleteAction($formId, $objectId = 0)
     {
-        $session = $this->get('session');
-        $page    = $session->get('mautic.formresult.page', 1);
-        $flashes = [];
+        $session   = $this->get('session');
+        $page      = $session->get('mautic.formresult.page', 1);
+        $flashes   = [];
+        $formModel = $this->getModel('form');
+        $form      = $formModel->getEntity($formId);
 
         if ($this->request->getMethod() == 'POST') {
             $model = $this->getModel('form.submission');
             $ids   = json_decode($this->request->query->get('ids', ''));
 
             if (!empty($ids)) {
-                $formModel = $this->getModel('form');
-                $form      = $formModel->getEntity($formId);
-
                 if ($form === null) {
                     $flashes[] = [
                         'type'    => 'error',
