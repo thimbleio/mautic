@@ -19,7 +19,6 @@ use Mautic\CoreBundle\Helper\Chart\BarChart;
 use Mautic\CoreBundle\Helper\Chart\ChartQuery;
 use Mautic\CoreBundle\Helper\Chart\LineChart;
 use Mautic\CoreBundle\Helper\Chart\PieChart;
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Helper\DateTimeHelper;
 use Mautic\CoreBundle\Helper\IpLookupHelper;
 use Mautic\CoreBundle\Helper\ThemeHelper;
@@ -104,11 +103,6 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
     protected $messageQueueModel;
 
     /**
-     * @var mixed
-     */
-    protected $coreParameters;
-
-    /**
      * @var bool
      */
     protected $updatingTranslationChildren = false;
@@ -121,16 +115,15 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
     /**
      * EmailModel constructor.
      *
-     * @param IpLookupHelper       $ipLookupHelper
-     * @param ThemeHelper          $themeHelper
-     * @param Mailbox              $mailboxHelper
-     * @param MailHelper           $mailHelper
-     * @param LeadModel            $leadModel
-     * @param CompanyModel         $companyModel
-     * @param TrackableModel       $pageTrackableModel
-     * @param UserModel            $userModel
-     * @param CoreParametersHelper $coreParametersHelper
-     * @param MessageQueueModel    $messageQueueModel
+     * @param IpLookupHelper    $ipLookupHelper
+     * @param ThemeHelper       $themeHelper
+     * @param Mailbox           $mailboxHelper
+     * @param MailHelper        $mailHelper
+     * @param LeadModel         $leadModel
+     * @param CompanyModel      $companyModel
+     * @param TrackableModel    $pageTrackableModel
+     * @param UserModel         $userModel
+     * @param MessageQueueModel $messageQueueModel
      */
     public function __construct(
         IpLookupHelper $ipLookupHelper,
@@ -141,7 +134,6 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
         CompanyModel $companyModel,
         TrackableModel $pageTrackableModel,
         UserModel $userModel,
-        CoreParametersHelper $coreParametersHelper,
         MessageQueueModel $messageQueueModel
     ) {
         $this->ipLookupHelper     = $ipLookupHelper;
@@ -152,7 +144,6 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
         $this->companyModel       = $companyModel;
         $this->pageTrackableModel = $pageTrackableModel;
         $this->userModel          = $userModel;
-        $this->coreParameters     = $coreParametersHelper;
         $this->messageQueueModel  = $messageQueueModel;
     }
 
@@ -1154,7 +1145,7 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
         $isMarketing      = (in_array($emailType, ['marketing']) || !empty($listId));
         $emailAttempts    = (isset($options['email_attempts'])) ? $options['email_attempts'] : 3;
         $emailPriority    = (isset($options['email_priority'])) ? $options['email_priority'] : MessageQueue::PRIORITY_NORMAL;
-        $messageQueue     = (isset($options['resend_message_queue'])) ? $options['resend_message_queue'] : false;
+        $messageQueue     = (isset($options['resend_message_queue'])) ? $options['resend_message_queue'] : null;
 
         if (!$email->getId()) {
             return false;
@@ -1170,17 +1161,12 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
         $statRepo = $this->em->getRepository('MauticEmailBundle:Stat');
         /** @var \Mautic\EmailBundle\Entity\EmailRepository $emailRepo */
         $emailRepo = $this->getRepository();
-        /** @var \Mautic\LeadBundle\Entity\FrequencyRuleRepository $frequencyRulesRepo */
-        $frequencyRulesRepo = $this->em->getRepository('MauticLeadBundle:FrequencyRule');
 
         //get email settings such as templates, weights, etc
         $emailSettings = &$this->getEmailSettings($email);
 
-        $defaultFrequencyNumber = $this->coreParameters->getParameter('email_frequency_number');
-        $defaultFrequencyTime   = $this->coreParameters->getParameter('email_frequency_time');
-
         $sendTo  = $leads;
-        $leadIds = array_keys($leads);
+        $leadIds = array_keys($sendTo);
         $leadIds = array_combine($leadIds, $leadIds);
 
         if (!$ignoreDNC) {
@@ -1194,38 +1180,10 @@ class EmailModel extends FormModel implements AjaxLookupModelInterface
             }
         }
 
-        // Only check for frequency rules if there are leads to check - otherwise it goes into fetching frequency rules
-        // for all leads
+        // Process frequency rules for email
         if ($isMarketing && count($sendTo)) {
-            $dontSendTo = $frequencyRulesRepo->getAppliedFrequencyRules(
-                'email',
-                $leadIds,
-                $defaultFrequencyNumber,
-                $defaultFrequencyTime
-            );
-
-            if (!empty($dontSendTo)) {
-                $campaignEventId = (is_array($source) && 'campaign.event' === $source[0] && !empty($source[1])) ? $source[1] : null;
-                foreach ($dontSendTo as $frequencyRuleMet) {
-                    $scheduleInterval = $frequencyRuleMet['frequency_number'].substr($frequencyRuleMet['frequency_time'], 0, 1);
-                    if ($messageQueue && isset($messageQueue[$frequencyRuleMet['lead_id']])) {
-                        $this->messageQueueModel->rescheduleMessage($messageQueue[$frequencyRuleMet['lead_id']], $scheduleInterval);
-                    } else {
-                        // Queue this message to be processed by frequency and priority
-                        $this->messageQueueModel->addToQueue(
-                            [$sendTo[$frequencyRuleMet['lead_id']]],
-                            'email',
-                            $email->getId(),
-                            $scheduleInterval,
-                            $emailAttempts,
-                            $emailPriority,
-                            $campaignEventId
-                        );
-                    }
-
-                    unset($sendTo[$frequencyRuleMet['lead_id']]);
-                }
-            }
+            $campaignEventId = (is_array($source) && 'campaign.event' === $source[0] && !empty($source[1])) ? $source[1] : null;
+            $this->messageQueueModel->processFrequencyRules($sendTo, 'email', $email->getId(), $campaignEventId, $emailAttempts, $emailPriority, $messageQueue);
         }
 
         //get a count of leads

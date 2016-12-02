@@ -16,6 +16,7 @@ use Mautic\ChannelBundle\Entity\MessageQueue;
 use Mautic\ChannelBundle\Event\MessageQueueBatchProcessEvent;
 use Mautic\ChannelBundle\Event\MessageQueueEvent;
 use Mautic\ChannelBundle\Event\MessageQueueProcessEvent;
+use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Mautic\CoreBundle\Model\FormModel;
 use Mautic\LeadBundle\Entity\Lead;
 use Mautic\LeadBundle\Model\CompanyModel;
@@ -38,15 +39,21 @@ class MessageQueueModel extends FormModel
     protected $companyModel;
 
     /**
+     * @var CoreParametersHelper
+     */
+    protected $coreParametersHelper;
+
+    /**
      * MessageQueueModel constructor.
      *
      * @param LeadModel    $leadModel
      * @param CompanyModel $companyModel
      */
-    public function __construct(LeadModel $leadModel, CompanyModel $companyModel)
+    public function __construct(LeadModel $leadModel, CompanyModel $companyModel, CoreParametersHelper $coreParametersHelper)
     {
-        $this->leadModel    = $leadModel;
-        $this->companyModel = $companyModel;
+        $this->leadModel            = $leadModel;
+        $this->companyModel         = $companyModel;
+        $this->coreParametersHelper = $coreParametersHelper;
     }
 
     /**
@@ -55,6 +62,62 @@ class MessageQueueModel extends FormModel
     public function getRepository()
     {
         return $this->em->getRepository('MauticChannelBundle:MessageQueue');
+    }
+
+    /**
+     * @param array $leads
+     * @param       $channel
+     * @param       $channelId
+     * @param null  $campaignEventId
+     * @param int   $attempts
+     * @param int   $priority
+     * @param null  $messageQueue
+     */
+    public function processFrequencyRules(
+        array &$leads,
+        $channel,
+        $channelId,
+        $campaignEventId = null,
+        $attempts = 3,
+        $priority = MessageQueue::PRIORITY_NORMAL,
+        $messageQueue = null
+    ) {
+        $leadIds = array_keys($leads);
+        $leadIds = array_combine($leadIds, $leadIds);
+
+        /** @var \Mautic\LeadBundle\Entity\FrequencyRuleRepository $frequencyRulesRepo */
+        $frequencyRulesRepo     = $this->em->getRepository('MauticLeadBundle:FrequencyRule');
+        $defaultFrequencyNumber = $this->coreParametersHelper->getParameter('email_frequency_number');
+        $defaultFrequencyTime   = $this->coreParametersHelper->getParameter('email_frequency_time');
+
+        $dontSendTo = $frequencyRulesRepo->getAppliedFrequencyRules(
+            $channel,
+            $leadIds,
+            $defaultFrequencyNumber,
+            $defaultFrequencyTime
+        );
+
+        if (!empty($dontSendTo)) {
+            foreach ($dontSendTo as $frequencyRuleMet) {
+                $scheduleInterval = $frequencyRuleMet['frequency_number'].substr($frequencyRuleMet['frequency_time'], 0, 1);
+                if ($messageQueue && isset($messageQueue[$frequencyRuleMet['lead_id']])) {
+                    $this->messageQueueModel->rescheduleMessage($messageQueue[$frequencyRuleMet['lead_id']], $scheduleInterval);
+                } else {
+                    // Queue this message to be processed by frequency and priority
+                    $this->messageQueueModel->addToQueue(
+                        [$leads[$frequencyRuleMet['lead_id']]],
+                        $channel,
+                        $channelId,
+                        $scheduleInterval,
+                        $attempts,
+                        $priority,
+                        $campaignEventId
+                    );
+                }
+
+                unset($leads[$frequencyRuleMet['lead_id']]);
+            }
+        }
     }
 
     /**
@@ -69,8 +132,16 @@ class MessageQueueModel extends FormModel
      *
      * @return bool
      */
-    public function addToQueue($leads, $channel, $channelId, $scheduledInterval = null, $maxAttempts = 1, $priority = 1, $campaignEventId = null, $options = [])
-    {
+    public function addToQueue(
+        $leads,
+        $channel,
+        $channelId,
+        $scheduledInterval = null,
+        $maxAttempts = 1,
+        $priority = 1,
+        $campaignEventId = null,
+        $options = []
+    ) {
         $messageQueues = [];
 
         if (!$scheduledInterval) {
@@ -316,7 +387,7 @@ class MessageQueueModel extends FormModel
     }
 
     /**
-     * Process deprecated message events
+     * Process deprecated message events.
      *
      * @deprecated 2.4 to be removed in 3.0; BC for deprecated events
      *

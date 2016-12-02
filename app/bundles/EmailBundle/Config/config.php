@@ -349,7 +349,6 @@ return [
                     'mautic.lead.model.company',
                     'mautic.page.model.trackable',
                     'mautic.user.model.user',
-                    'mautic.helper.core_parameters',
                     'mautic.core.model.messagequeue',
                 ],
             ],

@@ -14,6 +14,7 @@ namespace Mautic\SmsBundle\EventListener;
 use Mautic\CampaignBundle\CampaignEvents;
 use Mautic\CampaignBundle\Event\CampaignBuilderEvent;
 use Mautic\CampaignBundle\Event\CampaignExecutionEvent;
+use Mautic\ChannelBundle\Model\MessageQueueModel;
 use Mautic\CoreBundle\Event\TokenReplacementEvent;
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
 use Mautic\CoreBundle\Helper\CoreParametersHelper;
@@ -56,6 +57,11 @@ class CampaignSubscriber extends CommonSubscriber
     protected $smsHelper;
 
     /**
+     * @var MessageQueueModel
+     */
+    protected $messageQueueModel;
+
+    /**
      * CampaignSubscriber constructor.
      *
      * @param CoreParametersHelper $coreParametersHelper
@@ -63,19 +69,22 @@ class CampaignSubscriber extends CommonSubscriber
      * @param SmsModel             $smsModel
      * @param AbstractSmsApi       $smsApi
      * @param SmsHelper            $smsHelper
+     * @param MessageQueueModel    $messageQueueModel
      */
     public function __construct(
         CoreParametersHelper $coreParametersHelper,
         LeadModel $leadModel,
         SmsModel $smsModel,
         AbstractSmsApi $smsApi,
-        SmsHelper $smsHelper
+        SmsHelper $smsHelper,
+        MessageQueueModel $messageQueueModel
     ) {
         $this->coreParametersHelper = $coreParametersHelper;
         $this->leadModel            = $leadModel;
         $this->smsModel             = $smsModel;
         $this->smsApi               = $smsApi;
         $this->smsHelper            = $smsHelper;
+        $this->messageQueueModel    = $messageQueueModel;
     }
 
     /**
@@ -151,21 +160,24 @@ class CampaignSubscriber extends CommonSubscriber
             )
         );
 
-        $metadata = $this->smsApi->sendSms($leadPhoneNumber, $tokenEvent->getContent());
+        $leadIds = [$lead->getId()];
+        $result  = [
+            'type'    => 'mautic.sms.sms',
+            'status'  => 'mautic.sms.timeline.status.delivered',
+            'id'      => $sms->getId(),
+            'name'    => $sms->getName(),
+            'content' => $tokenEvent->getContent(),
+        ];
 
-        $defaultFrequencyNumber = $this->coreParametersHelper->getParameter('sms_frequency_number');
-        $defaultFrequencyTime   = $this->coreParametersHelper->getParameter('sms_frequency_time');
-
-        /** @var \Mautic\LeadBundle\Entity\FrequencyRuleRepository $frequencyRulesRepo */
-        $frequencyRulesRepo = $this->leadModel->getFrequencyRuleRepository();
-
-        $leadIds = $lead->getId();
-
-        $dontSendTo = $frequencyRulesRepo->getAppliedFrequencyRules('sms', $leadIds, $defaultFrequencyNumber, $defaultFrequencyTime);
-
-        if (!empty($dontSendTo) and $dontSendTo[0]['lead_id'] != $lead->getId()) {
-            $metadata = $this->smsApi->sendSms($leadPhoneNumber, $smsEvent->getContent());
+        // @todo - implement MessageQueue listeners and move most of this method into SmsModel::sendSms()
+        // because these are going to be scheduled and never processed
+        $this->messageQueueModel->processFrequencyRules($leadIds, 'sms', $sms->getId(), $event->getEvent()['id']);
+        if (empty($leadIds)) {
+            $result['status'] = 'mautic.sms.timeline.status.scheduled';
+            $event->setResult($result);
         }
+
+        $metadata = $this->smsApi->sendSms($leadPhoneNumber, $tokenEvent->getContent());
 
         // If there was a problem sending at this point, it's an API problem and should be requeued
         if ($metadata === false) {
@@ -175,14 +187,6 @@ class CampaignSubscriber extends CommonSubscriber
         $this->smsModel->createStatEntry($sms, $lead);
         $this->smsModel->getRepository()->upCount($smsId);
         $event->setChannel('sms', $sms->getId());
-        $event->setResult(
-            [
-                'type'    => 'mautic.sms.sms',
-                'status'  => 'mautic.sms.timeline.status.delivered',
-                'id'      => $sms->getId(),
-                'name'    => $sms->getName(),
-                'content' => $tokenEvent->getContent(),
-            ]
-        );
+        $event->setResult($result);
     }
 }
