@@ -20,6 +20,7 @@ return [
                     'mautic.sms.model.sms',
                     'mautic.sms.api',
                     'mautic.helper.sms',
+                    'mautic.channel.model.queue',
                 ],
             ],
             'mautic.sms.configbundle.subscriber' => [
