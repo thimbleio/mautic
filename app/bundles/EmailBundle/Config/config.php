@@ -115,7 +115,7 @@ return [
                     'mautic.lead.model.lead',
                     'mautic.email.model.email',
                     'mautic.campaign.model.event',
-                    'mautic.core.model.messagequeue',
+                    'mautic.channel.model.queue',
                 ],
             ],
             'mautic.email.formbundle.subscriber' => [
@@ -349,7 +349,7 @@ return [
                     'mautic.lead.model.company',
                     'mautic.page.model.trackable',
                     'mautic.user.model.user',
-                    'mautic.core.model.messagequeue',
+                    'mautic.channel.model.queue',
                 ],
             ],
         ],

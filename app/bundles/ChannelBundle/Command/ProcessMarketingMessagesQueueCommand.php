@@ -65,8 +65,8 @@ class ProcessMarketingMessagesQueueCommand extends ModeratedCommand
             return 0;
         }
 
-        /** @var \Mautic\CoreBundle\Model\MessageQueueModel $model */
-        $model = $container->get('mautic.core.model.messagequeue');
+        /** @var \Mautic\ChannelBundle\Model\MessageQueueModel $model */
+        $model = $container->get('mautic.channel.model.queue');
 
         $output->writeln('<info>'.$translator->trans('mautic.campaign.command.process.messages').'</info>');
 
