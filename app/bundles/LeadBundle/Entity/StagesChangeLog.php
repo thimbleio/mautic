@@ -73,6 +73,7 @@ class StagesChangeLog
             ->build();
 
         $builder->createManyToOne('stage', 'Mautic\StageBundle\Entity\Stage')
+            ->inversedBy('log')
             ->addJoinColumn('stage_id', 'id', true, false, 'CASCADE')
             ->build();
 

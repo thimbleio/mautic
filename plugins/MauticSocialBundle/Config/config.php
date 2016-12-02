@@ -57,6 +57,7 @@ return [
                 'arguments' => [
                     'mautic.helper.integration',
                     'mautic.form.model.form',
+                    'mautic.helper.core_parameters',
                     ],
                 'alias' => 'sociallogin',
             ],

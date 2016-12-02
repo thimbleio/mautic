@@ -81,10 +81,11 @@ class FrequencyRule
 
         $builder->addDateAdded();
 
-        $builder->addNamedField('frequencyNumber', 'smallint', 'frequency_number');
+        $builder->addNamedField('frequencyNumber', 'smallint', 'frequency_number', true);
 
         $builder->createField('frequencyTime', 'string')
             ->columnName('frequency_time')
+            ->nullable()
             ->length(25)
             ->build();
 
@@ -97,10 +98,12 @@ class FrequencyRule
 
         $builder->createField('pauseFromDate', 'datetime')
             ->columnName('pause_from_date')
+            ->nullable()
             ->build();
 
         $builder->createField('pauseToDate', 'datetime')
             ->columnName('pause_to_date')
+            ->nullable()
             ->build();
     }
 

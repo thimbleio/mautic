@@ -87,6 +87,10 @@ class DynamicContentModel extends FormModel implements AjaxLookupModelInterface
      */
     public function getEntity($id = null)
     {
+        if ($id === null) {
+            return new DynamicContent();
+        }
+
         return parent::getEntity($id);
     }
 

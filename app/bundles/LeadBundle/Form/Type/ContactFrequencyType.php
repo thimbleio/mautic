@@ -25,7 +25,6 @@ class ContactFrequencyType extends AbstractType
 {
     private $leadModel;
 
-    private $em;
     /**
      * @param LeadModel $leadModel
      */
@@ -33,6 +32,7 @@ class ContactFrequencyType extends AbstractType
     {
         $this->leadModel = $leadModel;
     }
+
     /**
      * @param FormBuilderInterface $builder
      * @param array                $options
@@ -44,33 +44,40 @@ class ContactFrequencyType extends AbstractType
             $data = $event->getData();
 
             if (isset($data['channels']) && $data['channels']) {
-                $form->add('doNotContactChannels',
-                    'choice', [
-                        'choices'    => $data['channels'],
-                        'expanded'   => true,
-                        'label_attr' => ['class' => 'control-label'],
-                        'attr'       => ['onClick' => 'Mautic.togglePreferredChannel('.$data['leadId'].',this.value);'],
-                        'multiple'   => true,
-                        'label'      => 'mautic.lead.do.not.contact',
-                        'required'   => false,
-                        'data'       => $data['lead_channels'],
-                        'mapped'     => false,
-                ]);
+                $form->add(
+                    'doNotContactChannels',
+                    'choice',
+                    [
+                        'choices'           => $data['channels'],
+                        'choices_as_values' => true,
+                        'expanded'          => true,
+                        'label_attr'        => ['class' => 'control-label'],
+                        'attr'              => ['onClick' => 'Mautic.togglePreferredChannel(this.value);'],
+                        'multiple'          => true,
+                        'label'             => 'mautic.lead.do.not.contact',
+                        'required'          => false,
+                        'data'              => (!empty($data['lead_channels'])) ? $data['lead_channels'] : [],
+                    ]
+                );
+                $lead             = $this->leadModel->getEntity($data['leadId']);
+                $preferredChannel = $this->leadModel->getPreferredChannel($lead);
                 $form->add(
                     'preferred_channel',
                     'choice',
                     [
-                        'choices'     => $data['channels'],
-                        'expanded'    => false,
-                        'multiple'    => false,
-                        'label'       => 'mautic.lead.list.frequency.preferred.channel',
-                        'label_attr'  => ['class' => 'control-label'],
-                        'empty_value' => false,
-                        'required'    => false,
-                        'attr'        => [
+                        'choices'           => $data['channels'],
+                        'choices_as_values' => true,
+                        'expanded'          => false,
+                        'multiple'          => false,
+                        'label'             => 'mautic.lead.list.frequency.preferred.channel',
+                        'label_attr'        => ['class' => 'control-label'],
+                        'empty_value'       => false,
+                        'required'          => false,
+                        'attr'              => [
                             'class'   => 'form-control',
                             'tooltip' => 'mautic.lead.list.frequency.preferred.channel',
                         ],
+                        'data' => (!empty($preferredChannel)) ? $preferredChannel['channel'] : '',
                     ]
                 );
                 foreach ($data['channels'] as $channel) {
@@ -80,12 +87,13 @@ class ContactFrequencyType extends AbstractType
                         [
                             'precision'  => 0,
                             'label'      => 'mautic.lead.list.frequency.number',
-                            'label_attr' => ['class' => 'control-label'],
+                            'label_attr' => ['class' => 'text-muted fw-n'],
                             'required'   => true,
                             'attr'       => [
-                                'class' => 'frequency',
+                                'class' => 'frequency form-control',
                             ],
                             'required' => false,
+                            'disabled' => in_array($channel, $data['lead_channels']) ? false : true,
                         ]
                     );
 
@@ -99,48 +107,58 @@ class ContactFrequencyType extends AbstractType
                                 'MONTH' => 'month',
                             ],
                             'label'      => 'mautic.lead.list.frequency.times',
-                            'label_attr' => ['class' => 'control-label'],
+                            'label_attr' => ['class' => 'text-muted fw-n frequency-label'],
                             'multiple'   => false,
+                            'required'   => false,
                             'attr'       => [
                                 'class' => 'form-control',
                             ],
-                            'required' => false,
+                            'disabled' => in_array($channel, $data['lead_channels']) ? false : true,
                         ]
                     );
-
+                    if ($data['public_view'] == false) {
+                        $attributes = [
+                            'data-toggle' => 'date',
+                            'class'       => 'frequency-date form-control',
+                        ];
+                        $type = 'datetime';
+                    } else {
+                        $attributes = [
+                            'class' => 'form-control',
+                        ];
+                        $type = 'date';
+                    }
                     $form->add(
-                            'contact_pause_start_date_'.$channel,
-                            'datetime',
-                            [
-                                'widget'     => 'single_text',
-                                'label'      => 'mautic.lead.frequency.contact.start.date',
-                                'label_attr' => ['class' => 'control-label'],
-                                'attr'       => [
-                                    'data-toggle' => 'date',
-                                ],
-                                'format'   => 'yyyy-MM-dd',
-                                'required' => false,
-                                'data'     => isset($data['contact_pause_start_date_'.$channel]) ? $data['contact_pause_start_date_'.$channel] : null,
-                            ]
+                        'contact_pause_start_date_'.$channel,
+                        $type,
+                        [
+                            'widget'     => 'single_text',
+                            'label'      => false, //'mautic.lead.frequency.contact.start.date',
+                            'label_attr' => ['class' => 'text-muted fw-n'],
+                            'attr'       => $attributes,
+                            'format'     => 'yyyy-MM-dd',
+                            'required'   => false,
+                            'disabled'   => in_array($channel, $data['lead_channels']) ? false : true,
+                            'data'       => isset($data['contact_pause_start_date_'.$channel]) ? $data['contact_pause_start_date_'.$channel] : null,
+                        ]
                     );
                     $form->add(
                         'contact_pause_end_date_'.$channel,
-                        'datetime',
+                        $type,
                         [
                             'widget'     => 'single_text',
                             'label'      => 'mautic.lead.frequency.contact.end.date',
-                            'label_attr' => ['class' => 'control-label'],
-                            'attr'       => [
-                                'data-toggle' => 'date',
-                            ],
-                            'format'   => 'yyyy-MM-dd',
-                            'required' => false,
-                            'data'     => isset($data['contact_pause_end_date_'.$channel]) ? $data['contact_pause_end_date_'.$channel] : null,
+                            'label_attr' => ['class' => 'frequency-label text-muted fw-n'],
+                            'attr'       => $attributes,
+                            'format'     => 'yyyy-MM-dd',
+                            'required'   => false,
+                            'disabled'   => in_array($channel, $data['lead_channels']) ? false : true,
+                            'data'       => isset($data['contact_pause_end_date_'.$channel]) ? $data['contact_pause_end_date_'.$channel] : null,
                         ]
                     );
                 }
-                $lead      = $this->leadModel->getEntity($data['leadId']);
-                $leadLists = $this->leadModel->getLists($lead);
+
+                $leadLists = $this->leadModel->getLists($lead, false, false, $data['public_view']);
 
                 $lists = [];
                 foreach ($leadLists as $leadList) {
@@ -154,6 +172,7 @@ class ContactFrequencyType extends AbstractType
                         'label'      => 'mautic.lead.form.list',
                         'label_attr' => ['class' => 'control-label'],
                         'multiple'   => true,
+                        'expanded'   => $data['public_view'],
                         'required'   => false,
                         'data'       => $lists,
                     ]
@@ -168,6 +187,7 @@ class ContactFrequencyType extends AbstractType
                         'label'      => 'mautic.lead.form.categories',
                         'label_attr' => ['class' => 'control-label'],
                         'multiple'   => true,
+                        'expanded'   => $data['public_view'],
                         'required'   => false,
                         'data'       => $leadCategories,
                     ]
