@@ -363,18 +363,18 @@ Mautic.onPageLoad = function (container, response, inModal) {
 
     // Initialize tab overflow
     mQuery(container + " .nav-overflow-tabs ul").each(function() {
-        mQuery(this).overflowNavs({
-            "parent" : ".nav-overflow-tabs",
-            "override_width" : true
-        });
+        var overflowNavOptions = {
+            "parent": ".nav-overflow-tabs",
+            "override_width": true,
+            "more": Mautic.translate('mautic.core.tabs.more')
+        };
+
+        mQuery(this).overflowNavs(overflowNavOptions);
 
         var tabs = this;
         mQuery(window).resize(function() {
             // Adjust overflow tabs
-            mQuery(tabs).overflowNavs({
-                "parent" : ".nav-overflow-tabs",
-                "override_width" : true
-            });
+            mQuery(tabs).overflowNavs(overflowNavOptions);
         });
     });
 

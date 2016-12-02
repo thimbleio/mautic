@@ -55,11 +55,13 @@ if (!isset($deletedPanels)) {
                     ?>
                     <?php if ($optionGroup): ?><optgroup label="<?php echo $view['translator']->trans($groupId); ?>"><?php endif; ?>
                     <?php foreach ($groupPanels as $panelId => $panel): ?>
-                    <option id="<?php echo $panelId; ?>" value="<?php echo $panel['value']; ?>"<?php if (isset($panel['attr'])) {
-                        echo $panel['attr'];
-                    } ?><?php if (!empty($panel['prototypeTemplatePlaceholders'])) {
-                        echo ' data-placeholders="'.$view->escape(json_encode($panel['prototypeTemplatePlaceholders'])).'"';
-                    } ?>>
+                    <option id="<?php echo $panelId; ?>" value="<?php echo $panel['value']; ?>"
+                            data-default-label="<?php echo $view->escape($panel['label']); ?>"
+                        <?php if (isset($panel['attr'])): echo $panel['attr']; endif ?>
+                        <?php if (!empty($panel['prototypeTemplatePlaceholders'])):
+                            echo ' data-placeholders="'.$view->escape(json_encode($panel['prototypeTemplatePlaceholders'])).'"';
+                        endif; ?>
+                    >
                         <?php echo $panel['label']; ?>
                     </option>
                     <?php if ($optionGroup): ?></optgroup><?php endif; ?>

@@ -4,3 +4,13 @@ Mautic.messagesOnLoad = function(container) {
       mQuery(this).closest('.panel').append(mQuery(this));
   })
 };
+
+Mautic.toggleChannelFormDisplay = function (el, channel) {
+    Mautic.toggleTabPublished(el);
+
+    if (mQuery(el).val() === "1" && mQuery(el).prop('checked')) {
+        mQuery('#message_channels_form_' + channel).removeClass('hide')
+    } else {
+        mQuery('#message_channels_form_' + channel).addClass('hide');
+    }
+};

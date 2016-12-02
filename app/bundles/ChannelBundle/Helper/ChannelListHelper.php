@@ -53,15 +53,13 @@ class ChannelListHelper
      *
      * @return array
      */
-    public function getAllChannels()
+    public function getChannelList()
     {
-        if (count($this->channels)) {
+        if (!count($this->channels)) {
             $allChannels = $this->event->getChannels();
-
-            $channels = [];
-            foreach ($allChannels as $channel) {
-                $channelName = $this->translator->hasId('mautic.channel.'.$channel) ?
-                    $this->translator->trans('mautic.channel.'.$channel) : ucfirst($channel);
+            $channels    = [];
+            foreach ($allChannels as $channel => $details) {
+                $channelName            = isset($details['label']) ? $this->translator->trans($details['label']) : $this->getChannelLabel($channel);
                 $channels[$channelName] = $channel;
             }
             $this->channels = $channels;
@@ -71,21 +69,59 @@ class ChannelListHelper
     }
 
     /**
-     * @param $features
+     * @param      $features
+     * @param bool $listOnly
      *
      * @return array
      */
-    public function getFeatureChannels($features)
+    public function getFeatureChannels($features, $listOnly = false)
     {
         if (!is_array($features)) {
-            return $this->event->getFeatureChannels($features);
+            $features = [$features];
         }
 
         $channels = [];
         foreach ($features as $feature) {
-            $channels[$feature] = $this->event->getFeatureChannels($feature);
+            $featureChannels = $this->event->getFeatureChannels($feature);
+            $returnChannels  = [];
+            foreach ($featureChannels as $channel => $details) {
+                if (!isset($details['label'])) {
+                    $featureChannels[$channel]['label'] = $this->getChannelLabel($channel);
+                }
+
+                if ($listOnly) {
+                    $returnChannels[$featureChannels[$channel]['label']] = $channel;
+                } else {
+                    $returnChannels[$channel] = $featureChannels[$channel];
+                }
+            }
+            unset($featureChannels);
+            $channels[$feature] = $returnChannels;
+        }
+
+        if (count($features) === 1) {
+            $channels = $channels[$features[0]];
         }
 
         return $channels;
+    }
+
+    /**
+     * @return string
+     */
+    public function getChannels()
+    {
+        return $this->event->getChannels();
+    }
+
+    /**
+     * @param $channel
+     *
+     * @return string
+     */
+    private function getChannelLabel($channel)
+    {
+        return $this->translator->hasId('mautic.channel.'.$channel) ?
+            $this->translator->trans('mautic.channel.'.$channel) : ucfirst($channel);
     }
 }

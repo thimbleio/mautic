@@ -65,7 +65,7 @@
             // Create one if none exists
             if (! dropdown.length) {
                 dropdown = $('<li class="overflow-nav dropdown pull-right"></li>');
-                dropdown.append($('<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="overflow-count badge"></span><b class="caret"></b></a>'));
+                dropdown.append($('<a class="dropdown-toggle" data-toggle="dropdown" href="#"><span class="overflow-count"></span><b class="caret"></b></a>'));
                 dropdown.append($('<ul class="dropdown-menu"></ul>'));
             }
 
@@ -137,7 +137,7 @@
         }
 
         // Update overflow tab count
-        dropdown.find('.dropdown-toggle .overflow-count').text(dropdown.find('ul.dropdown-menu li').length+" ");
+        dropdown.find('.dropdown-toggle .overflow-count').text(dropdown.find('ul.dropdown-menu li').length+" "+options.more);
 
         $(ul).css({
             'height': 'auto',

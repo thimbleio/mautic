@@ -40,6 +40,10 @@ class MessageType extends AbstractFormStandardType
         $this->model = $messageModel;
     }
 
+    /**
+     * @param FormBuilderInterface $builder
+     * @param array                $options
+     */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         // Add standard fields

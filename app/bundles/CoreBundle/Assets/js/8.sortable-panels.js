@@ -85,6 +85,12 @@ Mautic.activateSortablePanel = function (panel) {
         event.preventDefault();
         mQuery(this).find('.btn-edit').first().click();
     });
+
+    if (mQuery(panel).hasClass('sortable-has-error')) {
+        var originalClass = mQuery(panel).find('.btn-edit i.fa').attr('class');
+        mQuery(panel).find('.btn-edit i.fa').attr('data-original-icon', originalClass);
+        mQuery(panel).find('.btn-edit i.fa').attr('class', 'fa fa-warning text-warning');
+    }
 };
 
 /**
@@ -113,7 +119,8 @@ Mautic.appendSortablePanel = function(sortablesContainer, modal) {
 
     // Create the new panel
     var newPanel = mQuery(sortablesContainer).find('.panel-prototype .panel').clone();
-    var placeholders = mQuery(sortablesContainer).find('.available-panel-selector').children('option:selected').attr('data-placeholders');
+    var selectedPanel = mQuery(sortablesContainer).find('.available-panel-selector').children('option:selected');
+    var placeholders  = selectedPanel.attr('data-placeholders');
     if (placeholders) {
         placeholders = mQuery.parseJSON(placeholders);
         var newPanelContent = mQuery(newPanel).html();
@@ -126,6 +133,8 @@ Mautic.appendSortablePanel = function(sortablesContainer, modal) {
     }
 
     mQuery(newPanel).addClass('new-panel');
+    mQuery(newPanel).attr('data-default-label', selectedPanel.attr('data-default-label'));
+
     mQuery(sortablesContainer).find('.drop-here').append(newPanel);
 
     // Copy the prototype's modal/form over to the new panel
@@ -150,7 +159,7 @@ Mautic.appendSortablePanel = function(sortablesContainer, modal) {
     mQuery(newModal).modal('show');
 
     // Activate chosens in the new modal
-    mQuery(this).find('select').not('.multiselect, .not-chosen').each(function() {
+    mQuery(newModal).find('select').not('.multiselect, .not-chosen').each(function() {
         Mautic.activateChosenSelect(this);
     });
 };
@@ -166,7 +175,7 @@ Mautic.updateSortablePanel = function(modalBtn, modal) {
     var panelId = mQuery(panel).attr('id');
 
     // Get label
-    var label = 'Define me with data-panel-label on submit button or modal';
+    var label = '';
     if (mQuery(modalBtn).attr('data-panel-label')) {
         label = mQuery(modalBtn).attr('data-panel-label');
     } else if (mQuery(modal).attr('data-panel-label')) {
@@ -175,6 +184,11 @@ Mautic.updateSortablePanel = function(modalBtn, modal) {
         // Use a name field
         label = mQuery(modal).find("input[name$='[name]']").val();
     }
+
+    if (!label.length) {
+        label = mQuery(panel).attr('data-default-label');
+    }
+
     mQuery(panel).find('.sortable-panel-label').html(label);
 
     var footer = '';
@@ -184,6 +198,15 @@ Mautic.updateSortablePanel = function(modalBtn, modal) {
         var footer = mQuery(modal).attr('data-panel-footer');
     }
     mQuery(panel).find('.sortable-panel.footer').html(footer);
+
+    // remove error and assume it's fixed till save again
+    if (mQuery(panel).hasClass('sortable-has-error')) {
+        mQuery(panel).removeClass('sortable-has-error');
+        var editBtn = mQuery(panel).find('.btn-edit i');
+        if (editBtn.length) {
+            editBtn.attr('class', editBtn.attr('data-original-icon'));
+        }
+    }
 
     Mautic.activateSortablePanel(panel);
     mQuery(panel).removeClass('new-panel');

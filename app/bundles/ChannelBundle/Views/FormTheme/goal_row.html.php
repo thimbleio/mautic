@@ -12,9 +12,14 @@
 if (!$goalType = $form->vars['data']->getGoalType()) {
     return;
 }
+
+$label = $form->vars['data']->getName();
+if (empty($label) && isset($defaultLabel)) {
+    $label = $defaultLabel;
+}
 ?>
 
-<span class="sortable-panel-label"><?php echo $form->vars['data']->getName(); ?></span>
+<span class="sortable-panel-label"><?php echo $label; ?></span>
 <?php
 echo $view->render('MauticCoreBundle:FormTheme:entity_properties.html.php',
     [

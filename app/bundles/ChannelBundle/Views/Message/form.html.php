@@ -51,16 +51,6 @@ foreach ($channels as $channel => $config) {
     $active = false;
 }
 
-// @todo - remove me
-$count = 0;
-while ($count < 30) {
-    $tabs[] = [
-        'id'      => 'tab_'.$count,
-        'name'    => "Tab $count",
-        'content' => "Tab $count",
-    ];
-    ++$count;
-}
 $view['slots']->set('formTabs', $tabs);
 
 $view['slots']->start('rightFormContent');

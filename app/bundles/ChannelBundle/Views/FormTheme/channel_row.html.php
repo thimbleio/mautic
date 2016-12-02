@@ -33,26 +33,28 @@ foreach ($form->children['goals'] as $goal) {
     $panels[$goal->vars['name']] = [
         'template'          => 'MauticChannelBundle:FormTheme:goal_row.html.php',
         'templateVariables' => [
-            'form'       => $goal,
-            'idPrefix'   => $idPrefix,
-            'namePrefix' => $namePrefix,
-            'goals'      => $channels[$channel]['goals'],
+            'form'         => $goal,
+            'idPrefix'     => $idPrefix,
+            'namePrefix'   => $namePrefix,
+            'goals'        => $channels[$channel]['goals'],
+            'defaultLabel' => $channels[$channel]['goals'][$goal->vars['data']->getGoalType()],
         ],
         'footer' => '<i class="fa fa-bullseye"></i> '.$channels[$channel]['goals'][$goal->vars['data']->getGoalType()],
     ];
 
     if ($view['form']->containsErrors($goal)) {
-        $panels[$goal->vars['name']]['class']                               = 'sortable-has-error';
-        $panels[$goal->vars['name']]['templateVariables']['editButtonIcon'] = 'fa-warning text-warning';
+        $panels[$goal->vars['name']]['class'] = 'sortable-has-error';
     }
 }
 
 echo $view['form']->row($form->children['channel']);
 ?>
-    <?php echo $view['form']->errors($form); ?>
-    <?php echo $view['form']->row($form->children['isEnabled']); ?>
+<?php echo $view['form']->errors($form); ?>
+<?php echo $view['form']->row($form->children['isEnabled']); ?>
+<div id="message_channels_form_<?php echo $channel; ?>"<?php if (empty($form->children['isEnabled']->vars['data'])) {
+    echo 'class="hide"';
+} ?>">
     <hr/>
-
     <h4><?php echo $view['translator']->trans('mautic.channel.message.form.channel_header'); ?></h4>
     <?php if (isset($form->children['channelId'])): ?>
     <p class="small"><?php echo $view['translator']->trans('mautic.channel.message.form.channel_descr'); ?></p>
@@ -95,4 +97,7 @@ echo $view['form']->row($form->children['channel']);
     if (!empty($channels[$channel]['channelTemplate'])):
         echo $view->render($channels[$channel]['channelTemplate'], ['form' => $form, 'channel' => $channel, 'channelProperties' => $channels[$channel]]);
     endif;
-endif;
+    endif;
+    ?>
+</div>
+
