@@ -47,14 +47,14 @@ class ChannelListHelper
         $this->translator = $translator;
 
         $event                 = $dispatcher->dispatch(ChannelEvents::ADD_CHANNEL, new ChannelEvent());
-        $this->channels        = $event->getChannels();
+        $this->channels        = $event->getChannelConfigs();
         $this->featureChannels = $event->getFeatureChannels();
         unset($event);
 
         // @deprecated 2.4 to be removed 3.0; BC support
         if ($dispatcher->hasListeners(\Mautic\LeadBundle\LeadEvents::ADD_CHANNEL)) {
             $event                 = $dispatcher->dispatch(\Mautic\LeadBundle\LeadEvents::ADD_CHANNEL, new \Mautic\LeadBundle\Event\ChannelEvent());
-            $this->channels        = array_merge($this->channels, $event->getChannels());
+            $this->channels        = array_merge($this->channels, $event->getChannelConfigs());
             $this->featureChannels = array_merge($this->featureChannels, $event->getFeatureChannels());
             unset($event);
         }

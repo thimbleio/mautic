@@ -58,11 +58,11 @@ class ChannelEvent extends CommonEvent
     }
 
     /**
-     * Returns the channel.
+     * Returns registered channels with their configs.
      *
-     * @return string
+     * @return array
      */
-    public function getChannels()
+    public function getChannelConfigs()
     {
         return $this->channels;
     }
@@ -75,5 +75,29 @@ class ChannelEvent extends CommonEvent
     public function getFeatureChannels()
     {
         return $this->featureChannels;
+    }
+
+    /**
+     * Set a preference center channel.
+     *
+     * @deprecated 2.4 to be removed 3.0; use addChannel()
+     *
+     * @param $channel
+     */
+    public function setChannel($channel)
+    {
+        $this->addChannel($channel, [\Mautic\LeadBundle\Model\LeadModel::CHANNEL_FEATURE => []]);
+    }
+
+    /**
+     * Returns a list of channels.
+     *
+     * @deprecated 2.4 to be removed 3.0; use getChannelConfigs()
+     *
+     * @return string
+     */
+    public function getChannels()
+    {
+        return array_keys($this->channels);
     }
 }
